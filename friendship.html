@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>Friendship tracker</title>
+<script>
+const defaultData = {
+"Kitasan Black": 35,
+"Shinko Windy": 15,
+"Fine Motion": 15,
+"Agnes Tachyon": 25,
+"Marvelous Sunday": 20,
+"Yukino Bijin": 25,
+};
+const forceDefault = false; // override localStorage
+</script>
+<style>
+body {
+  margin: 1em 1.5em;
+  font-size: 16px;
+  font-family: sans-serif;
+  background-color: #f7f7f8;
+}
+
+table {
+  margin-bottom: 1em;
+  font-size: 24px;
+}
+
+td {
+  padding: 0.4em;
+}
+
+.nameCell {
+  width: 12em;
+}
+
+.nameInput {
+  font-size: 20px;
+}
+
+.valueInput {
+  font-size: 24px;
+  text-align: center;
+}
+
+button, label {
+  margin-right: 0.4em;
+  font-size: 20px;
+}
+
+button {
+  margin-bottom: 1em;
+  margin-left: 0.4em;
+  padding: 0.2em 0.5em;
+}
+
+table button {
+  margin-bottom: 0;
+  margin-right: 0;
+}
+
+#charming {
+  margin-left: 1em;
+}
+
+#infoButton {
+  margin-top: 1em;
+}
+
+#infoButton, #info button, #info label {
+  font-size: 16px;
+}
+
+#rename, #cap {
+  margin-left: 0.6em;
+  margin-bottom: 1.5em;
+}
+
+#tips {
+  margin: 0.5em;
+  max-width: 80ch;
+}
+
+ul {
+  margin: 0;
+}
+
+li {
+  margin-top: 0.5em;
+}
+</style>
+</head><body>
+  <table id="table">
+  </table>
+  <div>
+    <button onclick="save()">Save</button>
+    <button onclick="load()" id="loadButton" disabled>Load</button>
+    <button onclick="sort()">&#x2193;Sort&nbsp;</button>
+    <input type="checkbox" name="charming" id="charming" onchange="renderTable()" /> <label for="charming">Charming (+7 / +9)</label>
+  </div>
+  <button id="infoButton" onclick="toggleSettings()">&#x25B8; Settings &amp; Info</button>
+  <div id="info" style="display: none">
+    <input type="checkbox" name="cap" id="cap" onchange="renderTable()" /> <label for="cap">Track friendship up to 100</label><br/>
+    <input type="checkbox" name="rename" id="rename" onchange="renderTable()" /> <label for="rename">Edit names</label>
+    <div>
+      <button onclick="loadDefault()">Load default state</button>
+      <button onclick="saveInitialState()">Save initial state</button>
+      <button onclick="loadInitialState()">Load initial state</button>
+    </div>
+    <div id="tips">Tips:<ul>
+      <li>Adjust browser zoom for comfort.</li>
+      <li>I click the tracker before I click training, because I normally use the right side of my game window to show the Agenda, not the Log, so after I click training, the friendship effects aren't visible for long. If there's a chance of failure, I click Save first, so that if the training fails, I can click Load to undo my changes in the tracker.</li>
+      <li>Source repository: <a href="https://github.com/Xom/uma-friendship">https://github.com/Xom/uma-friendship</a></li>
+      <li>Buy me a coffee at: <a href="https://ko-fi.com/xomnom">https://ko-fi.com/xomnom</a></li>
+    </ul></div>
+  </div>
+  <script>
+function getInitialState() {
+  try {
+    const stored = JSON.parse(localStorage.getItem('friendshipData'));
+    return Array.isArray(stored) ? stored : Object.entries(defaultData);
+  } catch (e) {
+    return Object.entries(defaultData);
+  }
+}
+
+let currentData = forceDefault ? Object.entries(defaultData) : getInitialState();
+let saveData = null;
+
+function clamp(x) {
+  const cap = document.getElementById('cap').checked ? 100 : 80;
+  if (x > cap) {
+    return cap;
+  }
+  if (x > 0) {
+    return x;
+  }
+  return 0;
+}
+
+function renderTable() {
+  const table = document.getElementById('table');
+  table.innerHTML = '';
+  for (let i = 0; i < 6; i++) {
+    const entry = currentData[i];
+    const row = document.createElement('tr');
+
+    const nameCell = document.createElement('td');
+    if (document.getElementById('rename').checked) {
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.value = entry[0];
+      nameInput.oninput = ((index) => (() => {
+        currentData[index][0] = nameInput.value;
+      }))(i);
+      nameInput.classList.add('nameInput');
+      nameCell.appendChild(nameInput);
+    } else {
+      nameCell.textContent = entry[0];
+    }
+    nameCell.classList.add('nameCell');
+
+    const valueCell = document.createElement('td');
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = 0;
+    input.max = document.getElementById('cap').checked ? 100 : 80;
+    entry[1] = clamp(entry[1]); // clamp here when cap gets toggled
+    input.value = entry[1];
+    input.oninput = ((index) => (() => {
+      currentData[index][1] = clamp(parseInt(input.value));
+      input.value = currentData[index][1];
+    }))(i);
+    input.classList.add('valueInput');
+    valueCell.appendChild(input);
+
+    const buttonCell = document.createElement('td');
+    const foo = document.createElement('button');
+    const bar = document.createElement('button');
+    if (document.getElementById('charming').checked) {
+      foo.textContent = '+7';
+      bar.textContent = '+9';
+    } else {
+      foo.textContent = '+5';
+      bar.textContent = '+7';
+    }
+    foo.onclick = ((index) => (() => {
+      currentData[index][1] = clamp(currentData[index][1] + parseInt(foo.textContent));
+      input.value = currentData[index][1];
+    }))(i);
+    bar.onclick = ((index) => (() => {
+      currentData[index][1] = clamp(currentData[index][1] + parseInt(bar.textContent));
+      input.value = currentData[index][1];
+    }))(i);
+    buttonCell.appendChild(foo);
+    buttonCell.appendChild(bar);
+
+    row.appendChild(nameCell);
+    row.appendChild(valueCell);
+    row.appendChild(buttonCell);
+    table.appendChild(row);
+  }
+}
+
+function save() {
+  saveData = JSON.stringify(currentData);
+  document.getElementById('loadButton').disabled = false;
+}
+
+function load() {
+  currentData = JSON.parse(saveData);
+  renderTable();
+}
+
+function sort() {
+  currentData.sort((a, b) => b[1] - a[1]);
+  renderTable();
+}
+
+function toggleSettings() {
+  const info = document.getElementById('info');
+  const infoButton = document.getElementById('infoButton');
+  if (info.style.display === 'none') {
+    info.style.display = '';
+    infoButton.textContent = '\u25BE Settings & Info';
+  } else {
+    info.style.display = 'none';
+    infoButton.textContent = '\u25B8 Settings & Info';
+  }
+}
+
+function loadDefault() {
+  currentData = Object.entries(defaultData);
+  renderTable();
+}
+
+function saveInitialState() {
+  localStorage.setItem('friendshipData', JSON.stringify(currentData));
+}
+
+function loadInitialState() {
+  currentData = getInitialState();
+  renderTable();
+}
+
+renderTable();
+  </script>
+</body></html>
