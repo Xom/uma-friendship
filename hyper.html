@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>Stat tracker</title>
+<style>
+body {
+  margin: 1em 1.5em;
+  font-size: 16px;
+  font-family: sans-serif;
+  background-color: #f7f7f8;
+}
+
+table {
+  margin-bottom: 1em;
+  font-size: 24px;
+}
+
+td {
+  padding: 0.4em;
+}
+
+.nameCell {
+  width: 2em;
+}
+
+.valueInput {
+  font-size: 24px;
+  text-align: center;
+}
+
+button {
+  font-size: 20px;
+  margin-left: 0.4em;
+  margin-bottom: 0;
+  margin-right: 0;
+  padding: 0.2em 0.5em;
+}
+</style>
+</head><body>
+  <table id="table"></table>
+  <script>
+const currentData = [
+  ['A', 0, 10],
+  ['B', 0, 0],
+  ['C', 0, 0],
+  ['D', 0, 0],
+  ['E', 0, 0],
+  ['F', 0, 0],
+];
+
+const table = document.getElementById('table');
+const plusButtons = [];
+
+for (let i = 0; i < currentData.length; i++) {
+  const entry = currentData[i];
+
+  const row = document.createElement('tr');
+
+  const nameCell = document.createElement('td');
+  nameCell.className = 'nameCell';
+  nameCell.textContent = entry[0];
+
+  const valueCell = document.createElement('td');
+  const valueInput = document.createElement('input');
+  valueInput.type = 'number';
+  valueInput.min = 0;
+  valueInput.max = 99999;
+  valueInput.value = entry[1];
+  valueInput.className = 'valueInput';
+  valueInput.oninput = () => {
+    currentData[i][1] = parseInt(valueInput.value);
+  };
+  valueCell.appendChild(valueInput);
+
+  const buttonCell = document.createElement('td');
+  const plusButton = document.createElement('button');
+  plusButton.textContent = '+';
+  buttonCell.appendChild(plusButton);
+
+  const incrementCell = document.createElement('td');
+  const incrementInput = document.createElement('input');
+  incrementInput.type = 'number';
+  incrementInput.min = 0;
+  incrementInput.max = 99999;
+  incrementInput.value = entry[2];
+  incrementInput.className = 'valueInput';
+  incrementInput.oninput = () => {
+    currentData[i][2] = parseInt(incrementInput.value);
+  };
+  incrementCell.appendChild(incrementInput);
+
+  plusButton.onclick = () => {
+    currentData[i][1] += parseInt(incrementInput.value);
+    valueInput.value = currentData[i][1];
+  };
+
+  plusButtons.push(plusButton);
+
+  row.append(nameCell, valueCell, buttonCell, incrementCell);
+  table.appendChild(row);
+}
+
+const bottomRow = document.createElement('tr');
+
+bottomRow.appendChild(document.createElement('td'));
+bottomRow.appendChild(document.createElement('td'));
+
+const buttonCell = document.createElement('td');
+buttonCell.colSpan = 2;
+
+const plusAllButton = document.createElement('button');
+plusAllButton.textContent = '+All';
+plusAllButton.onclick = () => {
+  for (const button of plusButtons) {
+    button.click();
+  }
+};
+
+buttonCell.appendChild(plusAllButton);
+bottomRow.appendChild(buttonCell);
+
+table.appendChild(bottomRow);
+  </script>
+</body></html>
